@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Study Buddy • DSATM</title>
+  <style>
+    :root{
+      --bg1:#0b1a3a; --bg2:#07132a; --bg3:#041022; --bg4:#030b18;
+      --accent1:#5aa0ff; --accent2:#7cc4ff; --accent3:#9dd6ff;
+      --btnTop:#1a4aa0; --btnBot:#10336e; --glowA:#8ac1ff; --glowB:#4c98ff;
+      --welcomeGrad: linear-gradient(90deg,#8ad0ff,#9a82ff,#ff6bd5,#8ad0ff);
+
+      --focus: 3px solid rgba(154,130,255,0.85);
+    }
+
+    /* Base */
+    html,body{height:100%;margin:0}
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(ellipse at 30% 20%, #102656 0%, var(--bg1) 25%, var(--bg2) 50%, var(--bg3) 75%, var(--bg4) 100%);
+      color:#eaf1ff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      /* allow scrolling on small viewports */
+      overflow-y:auto;
+      min-height:100vh;
+    }
+
+    /* Reduce motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .welcome { animation: none; }
+      .btn::after, .btn::before { transition: none; }
+      .btn.glow { animation: none; transform: none; }
+    }
+
+    /* Starfield */
+    .stars,.stars2,.stars3{
+      position:fixed; inset:0; background-repeat:repeat; pointer-events:none; z-index:0;
+      mix-blend-mode:screen;
+    }
+    .stars{ background-image:
+        radial-gradient(1px 1px at 15px 25px, #dfe9ff, transparent),
+        radial-gradient(1px 1px at 120px 80px, #bcd2ff, transparent),
+        radial-gradient(1px 1px at 220px 60px, #eaf1ff, transparent),
+        radial-gradient(1px 1px at 300px 140px, #cfe0ff, transparent);
+      background-size: 280px 280px; opacity:.8; }
+    .stars2{ background-image:
+        radial-gradient(2px 2px at 40px 90px, #c4daff, transparent),
+        radial-gradient(2px 2px at 90px 210px, #a9c7ff, transparent),
+        radial-gradient(2px 2px at 240px 30px, #e3ecff, transparent),
+        radial-gradient(2px 2px at 320px 160px, #91b3ff, transparent);
+      background-size: 360px 360px; opacity:.6; filter: blur(.2px); }
+    .stars3{ background-image:
+        radial-gradient(3px 3px at 60px 120px, #9fbfff, transparent),
+        radial-gradient(3px 3px at 200px 100px, #bdd4ff, transparent),
+        radial-gradient(3px 3px at 260px 220px, #a9c9ff, transparent);
+      background-size: 440px 440px; opacity:.45; filter: blur(.6px); }
+
+    /* Horizon / planet */
+    .horizon-wrap{
+      position:fixed; left:0; right:0; bottom:0; height:45vh; z-index:1; pointer-events:none;
+      display:block; max-height:48vh;
+    }
+    .horizon{
+      position:absolute; left:50%; bottom:-15vh; transform:translateX(-50%);
+      width:110vmin; height:50vmin; border-radius:50%;
+      background:
+        radial-gradient(circle at 50% 35%, #174089 0%, #112f68 45%, #0b234e 70%, rgba(5,16,34,0.8) 100%);
+      box-shadow: 0 0 20px 10px rgba(120,180,255,0.15), 0 0 60px 30px rgba(80,140,255,0.18);
+      filter: saturate(1.1);
+    }
+    .horizon-mask{ position:absolute; inset:auto 0 0 0; height:55vh; overflow:hidden; pointer-events:none; }
+    .rim{
+      position:absolute; left:50%; bottom:calc(55vh - 1px); transform:translateX(-50%);
+      width:110vmin; height:110vmin; border-radius:50%;
+      border:2px solid rgba(140,190,255,0.35);
+      box-shadow: 0 0 24px rgba(138,193,255,0.65), 0 0 60px rgba(90,160,255,0.40), inset 0 0 40px rgba(90,160,255,0.15);
+      clip-path: inset(0 0 50% 0);
+    }
+
+    /* Center stack */
+    .center{ position:relative; display:grid; place-items:center; z-index:2; min-height:60vh; padding:24px 12px; }
+    .stack{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px; }
+
+    .welcome{
+      font-size: clamp(20px, 4.8vw, 42px);
+      font-weight:700; letter-spacing:.02em;
+      background: var(--welcomeGrad);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 2px 10px rgba(120,180,255,.25));
+      animation: slideFade 800ms ease-out 200ms both, hue 8s linear infinite;
+      text-align:center;
+    }
+    @keyframes slideFade{ from{ opacity:0; transform: translateY(8px) scale(.98); } to{ opacity:1; transform: translateY(0) scale(1); } }
+    @keyframes hue{ from{ filter: drop-shadow(0 2px 10px rgba(120,180,255,.25)); } 50%{ filter: drop-shadow(0 2px 14px rgba(140,200,255,.40)); } to{ filter: drop-shadow(0 2px 10px rgba(120,180,255,.25)); } }
+
+    /* Buttons (glassy neon) */
+    .btn{
+      position:relative;
+      padding:12px 30px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(26,74,160,.24), rgba(16,51,110,.24));
+      color:#eaf1ff;
+      font-size:1rem;
+      letter-spacing:.04em;
+      border:1px solid rgba(147,191,255,.28);
+      box-shadow: 0 8px 20px rgba(20,80,180,.24), inset 0 0 0 rgba(255,255,255,0);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: transform .18s ease, box-shadow .25s ease, filter .25s ease;
+      cursor:pointer;
+      overflow:hidden;
+      text-decoration:none;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .btn[type="button"] { appearance: none; }
+    .btn:focus{ outline: none; box-shadow: 0 0 0 4px rgba(90,140,255,.08), var(--focus); }
+    .btn::before{
+      content:""; position:absolute; inset:-1px; border-radius:14px;
+      background: conic-gradient(from 0deg, rgba(138,193,255,0) 0deg, rgba(138,193,255,.65) 90deg, rgba(124,196,255,.85) 140deg, rgba(76,152,255,.75) 200deg, rgba(138,193,255,0) 300deg);
+      filter: blur(6px); opacity:.0; transition: opacity .25s ease, transform .6s linear; z-index:-1;
+    }
+    .btn::after{
+      content:""; position:absolute; top:-20%; left:-150%; width:60%; height:140%;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.35), rgba(255,255,255,0));
+      transform: skewX(-20deg); transition: left .8s ease;
+    }
+    .btn:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(40,100,200,.30), inset 0 0 14px rgba(138,193,255,.12); filter: brightness(1.04); }
+    .btn:hover::before{ opacity:1; transform: rotate(360deg); }
+    .btn:hover::after{ left:160%; }
+
+    .btn.glow{
+      transform: scale(1.04); box-shadow: 0 0 22px rgba(124,196,255,.55), 0 0 44px rgba(76,152,255,.35), inset 0 0 18px rgba(147,191,255,.35);
+      animation: btn-pulse 620ms ease;
+    }
+    @keyframes btn-pulse{
+      0%{ box-shadow: 0 0 10px rgba(124,196,255,.45), 0 0 24px rgba(76,152,255,.25), inset 0 0 10px rgba(147,191,255,.25); }
+      50%{ box-shadow: 0 0 28px rgba(124,196,255,.75), 0 0 58px rgba(76,152,255,.45), inset 0 0 22px rgba(147,191,255,.45); }
+      100%{ box-shadow: 0 0 10px rgba(124,196,255,.45), 0 0 24px rgba(76,152,255,.25), inset 0 0 10px rgba(147,191,255,.25); }
+    }
+
+    /* Hint */
+    .hint{ position:fixed; left:50%; bottom:10px; transform:translateX(-50%); font-size:12px; color:rgba(200,220,255,.55); z-index:2; }
+
+    /* Steps */
+    .step-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      animation: fadeIn 0.45s ease;
+      z-index:3;
+      min-width:240px;
+    }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+
+    .step-title { font-size: clamp(18px, 4vw, 26px); font-weight: 600; margin-bottom: 6px; color: #eaf1ff; }
+
+    /* Buttons inside step: keep consistent sizing */
+    .year-btn, .sem-btn { min-width:160px; padding:10px 20px; }
+    .back-btn { background:transparent; border:1px dashed rgba(147,191,255,.18); color:rgba(220,235,255,.9); padding:8px 16px; border-radius:10px; font-size:.92rem; }
+
+    /* Notes list (grid for larger screens) */
+    .notes-grid {
+      display:flex; flex-direction:column; gap:10px; max-width:520px; align-items:center;
+    }
+    @media(min-width:720px){
+      .notes-grid{ display:grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap:10px; }
+      .step-container{ min-width:360px; }
+    }
+
+    /* small screens adjust horizon so it doesn't cover controls */
+    @media(max-height:600px){
+      .horizon-wrap{ height:36vh; }
+      .horizon{ bottom:-9vh; height:42vmin; }
+      .horizon-mask{ height:44vh; }
+      .rim{ bottom:calc(44vh - 1px); }
+    }
+
+    /* utility hidden for aria */
+    .sr-only { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="stars2" aria-hidden="true"></div>
+  <div class="stars3" aria-hidden="true"></div>
+
+  <div class="horizon-wrap" aria-hidden="true">
+    <div class="horizon-mask">
+      <div class="horizon" role="presentation"></div>
+      <div class="rim" role="presentation"></div>
+    </div>
+  </div>
+
+  <main class="center" role="main" aria-labelledby="welcome-heading">
+    <div class="stack" id="main-menu" data-step="menu">
+      <h1 id="welcome-heading" class="welcome">Welcome, buddy</h1>
+      <div>
+        <button id="dsatm" class="btn" type="button" aria-controls="year-step" aria-haspopup="true">DSATM</button>
+      </div>
+    </div>
+
+    <!-- Step 1: Choose Year -->
+    <section class="step-container" id="year-step" role="region" aria-labelledby="year-title" aria-hidden="true">
+      <div class="step-title" id="year-title">Select Year</div>
+      <div aria-live="polite" class="sr-only" id="year-live">Year choices shown</div>
+      <div>
+        <button type="button" class="btn year-btn" data-year="1">1st Year</button>
+      </div>
+      <div>
+        <button type="button" class="btn year-btn" data-year="2">2nd Year</button>
+      </div>
+      <div>
+        <button type="button" class="btn year-btn" data-year="3">3rd Year</button>
+      </div>
+      <div>
+        <button type="button" class="btn year-btn" data-year="4">4th Year</button>
+      </div>
+      <div>
+        <button type="button" class="btn back-btn" data-back="menu">Back</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Choose Semester -->
+    <section class="step-container" id="sem-step" role="region" aria-labelledby="sem-title" aria-hidden="true">
+      <div class="step-title" id="sem-title">Select Semester</div>
+      <div aria-live="polite" class="sr-only" id="sem-live">Semester choices shown</div>
+      <div>
+        <button type="button" class="btn sem-btn" data-sem="1">Sem 1</button>
+        <button type="button" class="btn sem-btn" data-sem="2">Sem 2</button>
+      </div>
+      <div>
+        <button type="button" class="btn back-btn" data-back="year-step">Back</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Notes/PDFs -->
+    <section class="step-container" id="notes-step" role="region" aria-labelledby="notes-title" aria-hidden="true">
+      <div class="step-title" id="notes-title">Available Notes / PDFs</div>
+      <div class="notes-grid" id="notes-list">
+        <!-- keep your original PDF links; add rel for safety -->
+        <a href="https://drive.google.com/drive/folders/1pFMiw4u6fR2X8_dFPZVjkmJ5DMpVb9F8?usp=drive_link" target="_blank" rel="noopener" class="btn">Maths M-1 Notes</a>
+        <a href="https://drive.google.com/drive/folders/1dI_PANy-_tb_7opcvkwGCOOleZp1TYc7?usp=drive_link" target="_blank" rel="noopener" class="btn">CAED Notes</a>
+        <a href="https://drive.google.com/drive/folders/1qgcoyylP73dgf_BYKOZxLIoMjiZfP1Og?usp=drive_link" target="_blank" rel="noopener" class="btn">IEE Notes</a>
+        <a href="https://drive.google.com/drive/folders/1bCkhKAU3wTWTGuMrlC13xjLulJvzEGsW?usp=drive_link" target="_blank" rel="noopener" class="btn">PHYSICS Notes</a>
+        <a href="https://drive.google.com/drive/folders/1nYYlpfEJkwdlY90OvY1RQEvQnNtOdD8o?usp=drive_link" target="_blank" rel="noopener" class="btn">CHEMISTRY Notes</a>
+        <a href="https://drive.google.com/drive/folders/1LEtbRaCZCXt8K1SK_WtEaUfdo4MECzxd?usp=drive_link" target="_blank" rel="noopener" class="btn">POP in C Notes</a>
+        <a href="https://drive.google.com/drive/folders/1OAJ7Dcy1Csy1VN82sT34MTHPlplzbtXm?usp=drive_link" target="_blank" rel="noopener" class="btn">SAMSKRUTIKA Kannada</a>
+        <a href="https://drive.google.com/drive/folders/146pSnnbtMovtE3lJpBys1zWLhPi2Df8i?usp=drive_link" target="_blank" rel="noopener" class="btn">BALAKE Kannada</a>
+        <a href="https://drive.google.com/drive/folders/1her8JgOJWeK0AVABgxXvIB3Kuj2z7UYC?usp=drive_link" target="_blank" rel="noopener" class="btn">ICE-CIVIL Notes</a>
+        <a href="https://drive.google.com/drive/folders/1_FzNvjOasnCSIr8QPQK1o5AubZndO24u?usp=drive_link" target="_blank" rel="noopener" class="btn">IOT Notes</a>
+        <a href="https://drive.google.com/drive/folders/1Ou-XBeENV78p8TgtgTtU9cYC_1eyIuWs?usp=drive_link" target="_blank" rel="noopener" class="btn">IPP-PythonNotes</a>
+        <a href="https://drive.google.com/drive/folders/1L1mqHNkjttOA9r9bHdpxZNAnkTJ3Fg1Z?usp=drive_link" target="_blank" rel="noopener" class="btn">Indian Constitution</a>
+        <a href="https://drive.google.com/drive/folders/1VrWeaeXubnIrmbJlWudSxxZ60qFPuiju?usp=drive_link" target="_blank" rel="noopener" class="btn">Engineering Explo. Notes</a>
+        <a href="https://drive.google.com/drive/folders/1HBV4fTS1qRPZL6fWLyj1kXMAdiTNrwMK?usp=drive_link" target="_blank" rel="noopener" class="btn">CE-English Notes</a>
+        <a href="https://drive.google.com/drive/folders/1OB_-A9roBjTV3HvIv_pizpsQQXHMFPHF?usp=drive_link" target="_blank" rel="noopener" class="btn">Maths M-2 Notes</a>
+        <a href="https://drive.google.com/drive/folders/1OkjoaY8bHtlFqYZB6hYnVjypSvXyPrVo?usp=drive_link" target="_blank" rel="noopener" class="btn">PWS-English Notes</a>
+        <!-- <a href="sample3.pdf" target="_blank" rel="noopener" class="btn">Maths Notes</a> -->
+      </div>
+      <div>
+        <button type="button" class="btn back-btn" data-back="sem-step">Back</button>
+      </div>
+    </section>
+
+    <div class="hint">Tip: Press <kbd>Esc</kbd> to go back.</div>
+  </main>
+
+  <script>
+    // Helper: show/hide steps and manage aria
+    const mainMenu = document.getElementById('main-menu');
+    const dsatmBtn = document.getElementById('dsatm');
+    const yearStep = document.getElementById('year-step');
+    const semStep = document.getElementById('sem-step');
+    const notesStep = document.getElementById('notes-step');
+
+    const stepOrder = ['menu', 'year-step', 'sem-step', 'notes-step'];
+    let historyStack = ['menu']; // maintain our own simple history
+
+    function showStep(id) {
+      // hide everything first
+      document.querySelectorAll('.step-container, #main-menu').forEach(el=>{
+        el.style.display = (el.id === id || (el.id === 'main-menu' && id === 'menu')) ? (el.id === 'main-menu' ? 'flex' : 'flex') : 'none';
+      });
+
+      // toggle aria-hidden
+      document.querySelectorAll('.step-container, #main-menu').forEach(el=>{
+        const hidden = !(el.id === id || (el.id === 'main-menu' && id === 'menu'));
+        el.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+      });
+
+      // Set focus to first actionable element in the visible step
+      setTimeout(()=>{
+        const container = (id === 'menu') ? document.getElementById('main-menu') : document.getElementById(id);
+        if (!container) return;
+        const focusEl = container.querySelector('button, a');
+        if (focusEl) focusEl.focus();
+      }, 60);
+    }
+
+    // Start with menu visible
+    showStep('menu');
+
+    // Glow logic (keeps original effect, but robust)
+    dsatmBtn.addEventListener('click', () => {
+      // glow
+      dsatmBtn.classList.remove('glow');
+      void dsatmBtn.offsetWidth;
+      dsatmBtn.classList.add('glow');
+      setTimeout(()=> dsatmBtn.classList.remove('glow'), 650);
+
+      // navigate
+      historyStack.push('year-step');
+      showStep('year-step');
+    });
+
+    // Year -> Sem
+    document.querySelectorAll('.year-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const yr = btn.dataset.year;
+        // store selection (optional) to localStorage
+        try { localStorage.setItem('studyBuddy:year', yr); } catch(e){}
+        historyStack.push('sem-step');
+        showStep('sem-step');
+      });
+    });
+
+    // Sem -> Notes
+    document.querySelectorAll('.sem-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const sem = btn.dataset.sem;
+        try { localStorage.setItem('studyBuddy:sem', sem); } catch(e){}
+        historyStack.push('notes-step');
+        showStep('notes-step');
+      });
+    });
+
+    // Back buttons
+    document.querySelectorAll('[data-back]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const target = b.dataset.back;
+        // go to explicit target (safer)
+        // if target exists, set history accordingly
+        historyStack.push(target);
+        showStep(target);
+      });
+    });
+
+    // Escape: go back to previous step (our history)
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        // pop current
+        if (historyStack.length <= 1) {
+          // if only menu, do nothing
+          showStep('menu'); return;
+        }
+        // remove current, then get previous
+        historyStack.pop();
+        const prev = historyStack[historyStack.length - 1] || 'menu';
+        showStep(prev);
+      }
+    });
+
+    // Small accessibility: if user has saved selections, announce them (non-intrusive)
+    (function announceSaved() {
+      try {
+        const yr = localStorage.getItem('studyBuddy:year');
+        const sem = localStorage.getItem('studyBuddy:sem');
+        if (yr || sem) {
+          // create a short live region announcement
+          const region = document.createElement('div');
+          region.setAttribute('aria-live', 'polite');
+          region.className = 'sr-only';
+          region.textContent = `Last selection: ${yr ? yr + ' year' : ''} ${sem ? ', sem ' + sem : ''}`;
+          document.body.appendChild(region);
+          setTimeout(()=> region.remove(), 3000);
+        }
+      } catch(e){}
+    })();
+
+    // Make links safe (basic)
+    document.querySelectorAll('#notes-list a').forEach(a => a.setAttribute('target','_blank'));
+
+    // Ensure buttons have type=button for older browsers (defensive)
+    document.querySelectorAll('button').forEach(b => {
+      if (!b.hasAttribute('type')) b.setAttribute('type','button');
+    });
+
+  </script>
+</body>
+</html>
